@@ -22,7 +22,12 @@ int main(){
         // use whatever topic to test
 
         // in the future: implement local storage of generated random data(?)
+        std::string message = "test";
+        while (true) {
+            mqtt::message_ptr pubMessage = mqtt::make_message(topic, message, 8, true);
+            client.publish(pubMessage)->wait();
 
+        }
 
         client.disconnect()->wait();
         std::cout << "Disconnected." << std::endl;
