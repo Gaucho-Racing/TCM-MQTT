@@ -2,3 +2,4 @@
 *.exe
 *.o
 MQTT
+test.db
