@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17
-LDFLAGS = -lpaho-mqttpp3 -lpaho-mqtt3c
+LDFLAGS = -lpaho-mqttpp3 -lpaho-mqtt3c -lsqlite3
 TARGET = MQTT
 SRC = MQTT.cpp
 # The build rule
