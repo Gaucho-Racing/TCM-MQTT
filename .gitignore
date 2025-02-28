@@ -1,5 +1,5 @@
 *.out
 *.exe
 *.o
+*.db
 MQTT
-test.db
