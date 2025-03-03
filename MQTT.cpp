@@ -41,6 +41,7 @@ void connectMQTT(){
     try{
         mqtt::connect_options options;
         options.set_clean_session(false); 
+        options.set_automatic_reconnect(true);
 
         options.set_password("fortnite"); // change change change change change change change change 
 
@@ -53,7 +54,7 @@ void connectMQTT(){
     }
 }
 
-void reconnectMQTT(){
+void reconnectMQTT(){ // honestly redundant, its faster i guess
     try{
         cout << "MQTT reconnecting . . ." << endl;
 
@@ -67,8 +68,6 @@ void reconnectMQTT(){
         cerr << e.what() << endl; // failed to connect (probably timeout)
         return;
     }
-
-
 }
 
 void disconnect(){
@@ -125,7 +124,7 @@ void publishData(string nodeID, string messageID, const uint8_t arr[], int lengt
     } catch (const mqtt::exception &e) {
         cout << "Publish failed, reconnecting: " << timestamp << endl;
         cerr << e.what() << endl; // not connected, MQTT error [-3]: Disconnected
-        reconnectMQTT();
+        reconnectMQTT(); // honestly redundant, its faster i guess
     }
 }
 
@@ -148,7 +147,7 @@ void test(){
         publishData("ecu","0x01", arr, len);
 
 
-        //std::this_thread::sleep_for(std::chrono::milliseconds(1)); 
+        std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
         //break;
     }
 }
