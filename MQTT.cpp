@@ -9,7 +9,8 @@
 
 using namespace std;
 
-const string serverURI("tcp://localhost:1883");
+// const string serverURI("tcp://localhost:1883");
+const string serverURI("tcp://169.231.76.240:1883");
 
 
 const string clientID("jetson_client");
@@ -77,6 +78,9 @@ void reconnectMQTT(){ // honestly redundant, its faster i guess
 
         mqtt::connect_options options;
         options.set_clean_session(false); 
+        options.set_automatic_reconnect(true);
+
+
         options.set_password("fortnite");
         client.connect(options);
 
@@ -137,7 +141,7 @@ void publishData(string nodeID, string messageID, const uint8_t arr[], int lengt
 
         client.publish(topic, m.data(), size, 1, true);
 
-        cout << "Published: " << timestamp << " to " << topic << endl;
+        cout << "Published: " << timestamp << " to " << topic << endl; // bruh why tf does it not throw ex when wifi off (for reconnecting)
     } catch (const mqtt::exception &e) {
         cout << "Publish failed, reconnecting: " << timestamp << endl;
         cerr << e.what() << endl; // not connected, MQTT error [-3]: Disconnected
@@ -164,7 +168,7 @@ void test(){
         publishData("ecu","0x01", arr, len);
 
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
         //break;
     }
 }
@@ -188,7 +192,7 @@ void test2(){ // poor length, edge cases for length
         publishData("ecu","0x01", arr, -1);
         publishData("ecu","0x01", arr, 1);
 
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // 1 second delay
+        std::this_thread::sleep_for(std::chrono::seconds(20)); // 1 second delay
     }
 }
 
