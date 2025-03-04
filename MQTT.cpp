@@ -31,6 +31,23 @@ long long getTimestamp(){
 void connectDB(){
     if(sqlite3_open(dbName.c_str(), &db) == SQLITE_OK){
         cout << "Database connected!" << endl;
+
+        const string createTableQuery = 
+            "CREATE TABLE IF NOT EXISTS gr25 ("
+            "timestamp INTEGER, "
+            "topic TEXT, "
+            "data BLOB, "
+            "synced INTEGER);";
+
+        sqlite3_stmt *stmt;
+        if (sqlite3_prepare_v2(db, createTableQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+            cout << "Table created or exists already!" << endl;
+        } else {
+            cerr << "Error creating table!" << endl;
+        }
+
     } else {
         cerr << "Failed to connect to database." << endl;
         return;
