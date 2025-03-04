@@ -9,8 +9,7 @@
 
 using namespace std;
 
-// const string serverURI("tcp://localhost:1883");
-const string serverURI("tcp://169.231.76.240:1883");
+const string serverURI("tcp://localhost:1883");
 
 
 const string clientID("jetson_client");
