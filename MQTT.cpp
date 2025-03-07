@@ -1,16 +1,16 @@
 #include <mqtt/async_client.h>
 #include <string> 
 #include <iostream>
-#include <random> // for random data
+#include <random> 
 #include <chrono>
 #include <sqlite3.h>
 #include <vector>
-#include <thread>  // For std::this_thread::sleep_for
+#include <thread>  
 
 using namespace std;
 
-const string serverURI("tcp://localhost:1883");
-
+const string serverURI("tcp://localhost:1883"); // replace 
+ 
 
 const string clientID("jetson_client");
 const string persistDir("./persist/");
@@ -19,8 +19,18 @@ const string tableName("gr25");
 mqtt::async_client client(serverURI,clientID, persistDir);
 sqlite3 *db; 
 
-const uint8_t uploadKey[2] = {69, 69};
+const uint8_t uploadKey[2] = {69, 69}; // doesnt do anything rn
+const string mqttPassword("fortnite"); // doesnt do anything rn
 
+
+class callback : public virtual mqtt::callback {
+    void connection_lost(const string& cause){
+        cerr << "Callback: MQTT connection lost!" << cause << endl;
+    }
+    void connected(const string& cause){
+        cout << "Callback: MQTT connected!" << endl;
+    }
+};
 
 long long getTimestamp(){
     auto now = std::chrono::system_clock::now();
@@ -31,14 +41,12 @@ long long getTimestamp(){
 void connectDB(){
     if(sqlite3_open(dbName.c_str(), &db) == SQLITE_OK){
         cout << "Database connected!" << endl;
-
         const string createTableQuery = 
             "CREATE TABLE IF NOT EXISTS gr25 ("
             "timestamp INTEGER, "
             "topic TEXT, "
             "data BLOB, "
             "synced INTEGER);";
-
         sqlite3_stmt *stmt;
         if (sqlite3_prepare_v2(db, createTableQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
             sqlite3_step(stmt);
@@ -47,11 +55,11 @@ void connectDB(){
         } else {
             cerr << "Error creating table!" << endl;
         }
-
     } else {
         cerr << "Failed to connect to database." << endl;
         return;
     }
+    cout << endl;
 }
 
 void connectMQTT(){
@@ -59,35 +67,14 @@ void connectMQTT(){
         mqtt::connect_options options;
         options.set_clean_session(false); 
         options.set_automatic_reconnect(true);
-
-        options.set_password("fortnite"); // change change change change change change change change 
-
+        options.set_keep_alive_interval(1); // 60 if unspecified
+        options.set_password(mqttPassword); 
         client.connect(options)->wait(); 
-        cout << "MQTT connected!" << endl;
     } catch(const mqtt::exception& e) {
-        cout << "MQTT could not connect." << endl;
-        cerr << e.what() << endl; // failed to connect (probably timeout)
+        cerr << e.what() << endl; // failed to connect 
         return;
     }
-}
-
-void reconnectMQTT(){ // honestly redundant, its faster i guess
-    try{
-        cout << "MQTT reconnecting . . ." << endl;
-
-        mqtt::connect_options options;
-        options.set_clean_session(false); 
-        options.set_automatic_reconnect(true);
-
-
-        options.set_password("fortnite");
-        client.connect(options);
-
-    } catch(const mqtt::exception& e) {
-        cerr << "MQTT could not reconnect." << endl;
-        cerr << e.what() << endl; // failed to connect (probably timeout)
-        return;
-    }
+    cout << endl;
 }
 
 void disconnect(){
@@ -114,7 +101,7 @@ void publishData(string nodeID, string messageID, const uint8_t arr[], int lengt
     sqlite3_bind_int(stmt, 4, synced);
     sqlite3_step(stmt); 
     sqlite3_finalize(stmt);
-    cout << "Saved: " << timestamp << endl;
+    // cout << "Saved: " << timestamp << endl;
 
     int size = 10+length;
     vector<uint8_t> m(size, 0);
@@ -129,22 +116,21 @@ void publishData(string nodeID, string messageID, const uint8_t arr[], int lengt
         m[i] = arr[i-10];
     }
 
-    
     try {
 
-        cout << "Attempting to publish: " << timestamp << " - ";
-        for(int i = 0; i < length+10; i++){
-            cout << int(m[i]) << " ";
-        }
-        cout << endl;
+        // cout << "Attempting to publish: " << timestamp << " - ";
+        // for(int i = 0; i < length+10; i++){
+        //     cout << int(m[i]) << " ";
+        // }
+        // cout << endl;
 
+        // cout << client.get_server_uri() << endl;
         client.publish(topic, m.data(), size, 1, true);
-
-        cout << "Published: " << timestamp << " to " << topic << endl; // bruh why tf does it not throw ex when wifi off (for reconnecting)
+        cout << "Published: " << timestamp << " to " << topic << endl; 
     } catch (const mqtt::exception &e) {
         cout << "Publish failed, reconnecting: " << timestamp << endl;
         cerr << e.what() << endl; // not connected, MQTT error [-3]: Disconnected
-        reconnectMQTT(); // honestly redundant, its faster i guess
+        connectMQTT(); // unneeded as should auto reconnect, but this makes it faster
     }
 }
 
@@ -167,7 +153,7 @@ void test(){
         publishData("ecu","0x01", arr, len);
 
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); 
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); 
         //break;
     }
 }
@@ -197,7 +183,10 @@ void test2(){ // poor length, edge cases for length
 
 int main(){
     connectDB();
+    callback cb;
+    client.set_callback(cb); // set callback before connectMQTT();
     connectMQTT();
+
     test();
     disconnect();
     return 0;
